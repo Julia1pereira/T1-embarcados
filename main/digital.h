@@ -26,23 +26,12 @@
 #define PIN15 GPIO_NUM_15
 #define PIN16 GPIO_NUM_16
 
-
-
-
-
-
-
-
-
 class Digital {
     public:
         int  digitalRead (gpio_num_t pino);
         void digitalWrite (gpio_num_t pino, int valor);
         void pinMode (gpio_num_t pino, int config);
-
 };
 
 extern Digital digital;
-
-
 #endif
