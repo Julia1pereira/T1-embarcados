@@ -5,8 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "esp_err.h"
-#include "esp_timer.h"  // Para medir o tempo em microsegundos
+#include "esp_timer.h" // Para medir o tempo em microsegundos
 #include "serial.h"
 #include "digital.h"
 
@@ -19,24 +18,30 @@ uint32_t calibrate_height(void);
 
 uint32_t calibration_height = 0;
 
-void app_main() {
-    digital.pinMode(PIN10, OUTPUT);
-    digital.pinMode(PIN9, INPUT);
+void app_main()
+{
+    digital.pinMode(PIN16, OUTPUT);
+    digital.pinMode(PIN5, INPUT);
 
-      serial.begin(9600);
-      char opcao = serial.readChar();
-    
+    serial.begin(9600);
+
     printf("Para realizar a calibragem você precisa instalar o sensor na posição final dele. Após, entrar com a opção 1 no menu.\n");
-    while(true){
-        if(opcao == '1') {
-            calibrate_height();
+    char opcao = serial.readChar();
+
+    while (true)
+    {
+        if (opcao == '1')
+        {
+            calibration_height = calibrate_height();
+            break;
         }
     }
 
     xTaskCreate(ultrasonic_task, "medicao_altura", 2048, NULL, 1, NULL);
 }
 
-void ultrasonic_task(void *pvParameters) {
+void ultrasonic_task(void *pvParameters)
+{
     printf("Medindo altura\n");
     uint32_t measured_height = 0;
     uint32_t distance = 0;
@@ -44,27 +49,33 @@ void ultrasonic_task(void *pvParameters) {
     uint64_t end = 0;
     char buffer[20];
 
-    while (1) {
-        digital.digitalWrite(PIN9, LOW);
+    while (1)
+    {
+        digital.digitalWrite(PIN16, LOW);
         ets_delay_us(2);
-        digital.digitalWrite(PIN9, HIGH);
+        digital.digitalWrite(PIN16, HIGH);
         ets_delay_us(10);
-        digital.digitalWrite(PIN9, LOW);
+        digital.digitalWrite(PIN16, LOW);
 
         // Emite um sinal e conta o tempo até esse sinal retornar
-        while (digital.digitalRead(PIN10) == 0) {
+        while (digital.digitalRead(PIN5) == 0)
+        {
             start = esp_timer_get_time();
         }
-        while (digital.digitalRead(PIN10) == 1) {
+        while (digital.digitalRead(PIN5) == 1)
+        {
             end = esp_timer_get_time();
         }
 
         // Usa os valores de tempo para calcular a distância
-        distance = (end - start) * 0.034 / 2;
+        distance = (end - start) / 58;
 
-        if (calibration_height == 0) {
+        if (calibration_height == 0)
+        {
             printf("Precisa de calibração! Pressione 1 para calibrar.\n");
-        } else {
+        }
+        else
+        {
             // Calcula a altura da pessoa
             measured_height = calibration_height - distance;
             sprintf(buffer, "Altura: %d cm\n", measured_height);
@@ -75,29 +86,32 @@ void ultrasonic_task(void *pvParameters) {
     }
 }
 
-uint32_t calibrate_height(void) {
+uint32_t calibrate_height(void)
+{
     uint32_t distance = 0;
     uint64_t start = 0;
     uint64_t end = 0;
 
     printf("Calibrando...\n");
 
-    digital.digitalWrite(PIN9, LOW);
+    digital.digitalWrite(PIN16, LOW);
     ets_delay_us(2);
-    digital.digitalWrite(PIN9, HIGH);
+    digital.digitalWrite(PIN16, HIGH);
     ets_delay_us(10);
-    digital.digitalWrite(PIN9, LOW);
+    digital.digitalWrite(PIN16, LOW);
 
     // Emite um sinal e conta o tempo até esse sinal retornar
-    while (digital.digitalRead(PIN10) == 0) {
+    while (digital.digitalRead(PIN5) == 0)
+    {
         start = esp_timer_get_time();
     }
-    while (digital.digitalRead(PIN10) == 1) {
+    while (digital.digitalRead(PIN5) == 1)
+    {
         end = esp_timer_get_time();
     }
 
     // Usa os valores de tempo para calcular a distância
-    distance = (end - start) * 0.034 / 2;
+    distance = (end - start) / 58;
     printf("Distância calibrada: %u cm\n", distance);
 
     return distance;
